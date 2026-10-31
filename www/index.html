@@ -99,10 +99,10 @@ function draw(){
  tx(g,'MỆNH GIÁ',x1/2,y,hh,'center',21*s,x1-8);tx(g,'SỐ TỜ',(x1+x2)/2,y,hh,'center',21*s,x2-x1-8);tx(g,'THÀNH TIỀN',(x2+W)/2,y,hh,'center',21*s,W-x2-8);
  y+=hh;g.fillStyle='#000';
  R.forEach(r=>{tx(g,f(r.v),x1-14,y,rh,'right',fs,x1-20);tx(g,r.t,(x1+x2)/2,y,rh,'center',fs,x2-x1-10);tx(g,r.a?f(r.a):'-',W-14,y,rh,'right',fs,W-x2-20);y+=rh;g.fillRect(0,y,W,2)});
- tx(g,'TỔNG CỘNG',x2/2,y,rh,'center',fs,x2-10);tx(g,f(total),W-14,y,rh,'right',fs,W-x2-20);y+=rh;g.fillRect(0,y,W,2);
+ const yr=y;tx(g,'TỔNG CỘNG',x2/2,y,rh,'center',fs,x2-10);tx(g,f(total),W-14,y,rh,'right',fs,W-x2-20);y+=rh;g.fillRect(0,y,W,2);
  const yt=y;
  tx(g,`${S.shop} NỘP DT NGÀY ${dmy}`,W/2,y,hh,'center',fs,W-16);y+=hh;g.fillRect(0,y-2,W,2);
- [0,x1,x2,W-2].forEach((x,i)=>g.fillRect(x,T,2,(i%3?yt-T:y-T)));
+ [[0,y],[x1,yr],[x2,yt],[W-2,y]].forEach(([x,e])=>g.fillRect(x,T,2,e-T));
 }
 
 function calc(){

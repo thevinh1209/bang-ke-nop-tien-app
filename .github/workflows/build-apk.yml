@@ -32,6 +32,13 @@ jobs:
           D=android/app/src/main/java/com/vh3/bangke
           mkdir -p "$D" && cp native/*.java "$D/"
           sed -i "s/versionCode 1/versionCode $GITHUB_RUN_NUMBER/; s/versionName \"1.0\"/versionName \"$V\"/" android/app/build.gradle
+      - name: Đổi icon và màn hình khởi động
+        run: |
+          R=android/app/src/main/res
+          rm -rf $R/mipmap-*
+          cp -r native/res/* $R/
+          pip install pillow
+          python native/make_splash.py $R native/icon.png
       - name: Dùng khóa ký cố định để cài đè được bản cũ
         run: mkdir -p ~/.android && cp keystore/debug.keystore ~/.android/debug.keystore
       - run: npx cap sync android

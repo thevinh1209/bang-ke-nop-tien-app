@@ -33,6 +33,7 @@ dialog{border:0;border-radius:10px;padding:18px;width:min(94vw,480px);box-shadow
 dialog::backdrop{background:#0006}
 dialog h2{margin:0 0 4px;font-size:18px}
 .act{display:flex;gap:8px;margin-top:14px}.act button{flex:1}
+.act a{flex:1;text-align:center;border:1px solid #1a1d24;border-radius:4px;padding:9px 14px;color:inherit;text-decoration:none;background:#fff}
 .paper{background:#fff;padding:14px;box-shadow:0 1px 0 #0003,0 8px 18px #0002;max-width:400px;margin-bottom:14px}
 #cv{width:100%;display:block;image-rendering:crisp-edges;outline:1px dashed #9aa1ad}
 .row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
@@ -75,7 +76,8 @@ summary{cursor:pointer;font-weight:600}
   <label>Chừa dưới (mm)<input data-k="bot" type="number" min="0" max="60" step="1"></label>
   <label>Tốc độ gửi<select data-k="pace"><option value="0">Bình thường</option><option value="1">Chậm</option><option value="2">Rất chậm</option></select></label>
   <label>Ngưỡng đen (0–255)<input data-k="th" type="number" min="50" max="230"></label>
- </div><div class="act"><button id="chk">Kiểm tra kết nối</button><button id="ok">Xong</button></div><p class="m"></p></dialog>
+ </div><div class="act"><button id="upd2">Kiểm tra cập nhật</button><a id="rel" target="_blank" rel="noopener">Mở trang tải bản mới nhất</a></div>
+<div class="act"><button id="chk">Kiểm tra kết nối</button><button id="ok">Xong</button></div><p class="m"></p></dialog>
 <script>
 const D=[500000,200000,100000,50000,20000,10000,5000,2000,1000];
 const $=s=>document.querySelector(s),f=n=>n.toLocaleString('vi-VN'),num=s=>+String(s).replace(/\D/g,'')||0;
@@ -133,9 +135,18 @@ $('#chk').onclick=()=>run('check','');
 const VER='__VERSION__',REPO='__REPO__';
 $('#ver').textContent=/^\d/.test(VER)?'v'+VER:'';
 const newer=(a,b)=>{a=a.split('.').map(Number);b=b.split('.').map(Number);for(let i=0;i<3;i++)if((a[i]||0)!==(b[i]||0))return(a[i]||0)>(b[i]||0);return false};
-(async()=>{if(!/^\d+\.\d+\.\d+$/.test(VER))return;
- try{const j=await(await fetch('https://api.github.com/repos/'+REPO+'/releases/latest')).json(),v=(j.tag_name||'').replace(/^v/,''),k=(j.assets||[]).find(x=>/\.apk$/.test(x.name));
-  if(k&&newer(v,VER)){const e=$('#upd');e.hidden=false;e.innerHTML='Có bản mới '+v+'. <a href="'+k.browser_download_url+'">Tải về và cài đặt</a>'}}catch(e){}})();
+async function updCheck(manual){
+ if(!/^\d+\.\d+\.\d+$/.test(VER)){if(manual)say('Bản này chưa có số phiên bản (bản thử).',false);return}
+ try{const r=await fetch('https://api.github.com/repos/'+REPO+'/releases/latest');if(!r.ok)throw new Error('GitHub trả mã '+r.status);
+  const j=await r.json(),v=(j.tag_name||'').replace(/^v/,''),k=(j.assets||[]).find(x=>/\.apk$/.test(x.name));
+  if(!k)throw new Error('bản '+v+' chưa có file APK (có thể đang build)');
+  if(newer(v,VER)){const u=$('#upd');u.hidden=false;u.innerHTML='Có bản mới '+v+'. <a href="'+k.browser_download_url+'">Tải về và cài đặt</a>';if(manual)say('Có bản mới '+v+'. Xem thanh vàng ở đầu trang.',true)}
+  else if(manual)say('Đang dùng bản mới nhất (v'+VER+').',true)
+ }catch(x){if(manual)say('Không kiểm tra được: '+x.message+'. Bạn bấm "Mở trang tải bản mới nhất" bên dưới.',false)}
+}
+updCheck(false);
+$('#upd2').onclick=()=>updCheck(true);
+$('#rel').href='https://github.com/'+REPO+'/releases/latest';
 
 document.querySelectorAll('[data-k]').forEach(e=>{e.value=S[e.dataset.k];e.onchange=()=>{S[e.dataset.k]=e.value;try{localStorage.kf_nt=JSON.stringify(S)}catch(x){}calc()}});
 $('#due').oninput=e=>{const v=num(e.target.value);e.target.value=v?f(v):'';calc()};

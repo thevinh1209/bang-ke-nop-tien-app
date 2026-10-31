@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="vi"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Bảng kê nộp tiền</title>
 <style>
 :root{--navy:#1c2a44;--ink:#1a1d24;--cell:#e2e4e8;--yel:#ffe600;--red:#c4161c;--bg:#f2f3f5}
 *{box-sizing:border-box}
 body{margin:0;font:15px/1.4 "Segoe UI",system-ui,sans-serif;color:var(--ink);background:var(--bg)}
-main{max-width:1000px;margin:0 auto;padding:20px;display:grid;grid-template-columns:minmax(0,430px) minmax(0,1fr);gap:28px;align-items:start}
+main{max-width:1000px;margin:0 auto;padding:max(env(safe-area-inset-top,0px),36px) 20px calc(max(env(safe-area-inset-bottom,0px),56px) + 24px);display:grid;grid-template-columns:minmax(0,430px) minmax(0,1fr);gap:28px;align-items:start}
 h1{grid-column:1/-1;margin:0;font-size:22px}
 table{width:100%;border-collapse:collapse;background:#fff;margin-bottom:10px}
 th{background:var(--navy);color:#fff;padding:9px;font-size:13px;font-weight:600}
@@ -25,8 +25,14 @@ td input:focus{outline:2px solid var(--navy);outline-offset:-2px;background:#fff
 button{font:inherit;cursor:pointer;border:1px solid #1a1d24;border-radius:4px;background:#fff;padding:9px 14px}
 #pr{width:100%;background:var(--yel);font-weight:800;font-size:17px;padding:13px}
 #pr:focus-visible,button:focus-visible{outline:3px solid var(--navy);outline-offset:2px}
-#msg{min-height:1.4em;margin:8px 0 0;font-weight:600}
-#msg.ok{color:#0a7a3d}#msg.er{color:var(--red)}
+.m{min-height:1.4em;margin:8px 0 0;font-weight:600}
+.m.ok{color:#0a7a3d}.m.er{color:var(--red)}
+header{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:12px}
+#gear{padding:9px;line-height:0;border-radius:50%;background:#fff}
+dialog{border:0;border-radius:10px;padding:18px;width:min(94vw,480px);box-shadow:0 10px 40px #0005}
+dialog::backdrop{background:#0006}
+dialog h2{margin:0 0 4px;font-size:18px}
+.act{display:flex;gap:8px;margin-top:14px}.act button{flex:1}
 .paper{background:#fff;padding:14px;box-shadow:0 1px 0 #0003,0 8px 18px #0002;max-width:400px;margin-bottom:14px}
 #cv{width:100%;display:block;image-rendering:crisp-edges;outline:1px dashed #9aa1ad}
 .row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
@@ -41,7 +47,7 @@ summary{cursor:pointer;font-weight:600}
 @media print{@page{size:80mm auto;margin:0}body>*{display:none!important}#pbox{display:block!important}#pbox img{width:72mm;display:block;margin:0 auto}}
 </style></head><body>
 <main>
-<h1>Bảng kê nộp tiền <small id="ver" style="font-weight:400;font-size:13px;color:#667"></small></h1>
+<header><h1>Bảng kê nộp tiền <small id="ver" style="font-weight:400;font-size:13px;color:#667"></small></h1><button id="gear" aria-label="Cài đặt máy in" title="Cài đặt máy in"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button></header>
 <div id="upd" hidden></div>
 <section>
  <label class="f">Ngày nộp <input type="date" id="dt"></label>
@@ -51,12 +57,15 @@ summary{cursor:pointer;font-weight:600}
  <table><tr><th class="y">DOANH THU PHẢI NỘP<th class="y">CHÊNH LỆCH
  <tr><td><input id="due" inputmode="numeric" placeholder="Nhập số tiền"><td class="d" id="diff">—</table>
  <button id="pr">In bảng kê</button>
- <p id="msg"></p>
+ <p id="msg" class="m"></p>
 </section>
 <aside>
  <div class="paper"><canvas id="cv"></canvas></div>
- <div class="row"><button id="chk">Kiểm tra kết nối</button></div>
- <details><summary>Cài đặt máy in và khoảng trắng</summary><div class="g">
+ 
+ 
+</aside>
+</main>
+<dialog id="set"><h2>Cài đặt máy in</h2><div class="g">
   <label>Cửa hàng<input data-k="shop"></label>
   <label>IP máy in<input data-k="host"></label>
   <label>Cổng<input data-k="port" type="number"></label>
@@ -66,9 +75,7 @@ summary{cursor:pointer;font-weight:600}
   <label>Chừa dưới (mm)<input data-k="bot" type="number" min="0" max="60" step="1"></label>
   <label>Tốc độ gửi<select data-k="pace"><option value="0">Bình thường</option><option value="1">Chậm</option><option value="2">Rất chậm</option></select></label>
   <label>Ngưỡng đen (0–255)<input data-k="th" type="number" min="50" max="230"></label>
- </div></details>
-</aside>
-</main>
+ </div><div class="act"><button id="chk">Kiểm tra kết nối</button><button id="ok">Xong</button></div><p class="m"></p></dialog>
 <script>
 const D=[500000,200000,100000,50000,20000,10000,5000,2000,1000];
 const $=s=>document.querySelector(s),f=n=>n.toLocaleString('vi-VN'),num=s=>+String(s).replace(/\D/g,'')||0;
@@ -77,7 +84,7 @@ try{Object.assign(S,JSON.parse(localStorage.kf_nt||'{}'))}catch(e){}
 let R=[],total=0;
 $('#tb').innerHTML=D.map((v,i)=>`<tr><td class="d">${f(v)}<td class="n"><input id="r${i}" inputmode="numeric"><td class="d" id="a${i}">-</tr>`).join('');
 $('#dt').value=new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
-const say=(m,ok)=>{const e=$('#msg');e.textContent=m;e.className=ok?'ok':'er'};
+const say=(m,ok)=>document.querySelectorAll('.m').forEach(e=>{e.textContent=m;e.className='m '+(ok?'ok':'er')});
 
 function tx(g,t,x,y,h,al,sz,w){let p=Math.round(sz);g.font=`bold ${p}px Arial`;while(g.measureText(String(t)).width>w&&p>10)g.font=`bold ${--p}px Arial`;g.textAlign=al;g.fillText(String(t),x,y+h/2+1)}
 
@@ -118,7 +125,7 @@ function job(){
 const q=()=>new URLSearchParams({host:S.host,port:S.port,pace:S.pace});
 const b64=u=>{let s='';for(let i=0;i<u.length;i+=8192)s+=String.fromCharCode.apply(null,u.subarray(i,i+8192));return btoa(s)};
 async function run(op,data){
- try{const j=await Capacitor.registerPlugin('TcpPrinter')[op]({host:S.host,port:+S.port,pace:+S.pace,data});say((j&&j.msg)||'Đã gửi tới máy in.',true)}
+ try{const P=window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.TcpPrinter;if(!P)throw new Error('Chưa nạp được plugin in. Hãy cài lại bản APK mới nhất.');const j=await P[op]({host:S.host,port:+S.port,pace:+S.pace,data});say((j&&j.msg)||'Đã gửi tới máy in.',true)}
  catch(e){say((e&&e.message)||'Không kết nối được máy in.',false)}
 }
 $('#pr').onclick=()=>{if(!total)return say('Chưa nhập số tờ nào.',false);say('Đang gửi…',true);run('send',b64(job()))};
@@ -135,5 +142,7 @@ $('#due').oninput=e=>{const v=num(e.target.value);e.target.value=v?f(v):'';calc(
 $('#dt').oninput=calc;
 const ins=[...document.querySelectorAll('#tb input,#due')];
 ins.forEach((e,i)=>{if(e.id!=='due')e.oninput=calc;e.onkeydown=k=>{if(k.key==='Enter'){k.preventDefault();(ins[i+1]||$('#pr')).focus()}}});
+$('#gear').onclick=()=>$('#set').showModal();
+$('#ok').onclick=()=>$('#set').close();
 calc();
 </script></body></html>

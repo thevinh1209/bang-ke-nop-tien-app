@@ -9,7 +9,16 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.Inet4Address;
+import java.net.NetworkInterface;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import com.getcapacitor.JSArray;
 
 /** Gửi lệnh ESC/POS thẳng tới máy in qua TCP cổng 9100 (thay cho cầu nối trên máy tính). */
 @CapacitorPlugin(name = "TcpPrinter")
@@ -60,6 +69,53 @@ public class TcpPrinterPlugin extends Plugin {
                 call.resolve();
             } catch (Exception e) {
                 call.reject("Gửi không được: " + e.getMessage());
+            }
+        }).start();
+    }
+
+    /** Quét dải mạng /24 của điện thoại, tìm thiết bị mở cổng 9100 (máy in). */
+    @PluginMethod
+    public void scan(final PluginCall call) {
+        new Thread(() -> {
+            try {
+                String base = null;
+                for (NetworkInterface ni : Collections.list(NetworkInterface.getNetworkInterfaces())) {
+                    if (!ni.isUp() || ni.isLoopback()) continue;
+                    for (InetAddress a : Collections.list(ni.getInetAddresses())) {
+                        if (a instanceof Inet4Address && a.isSiteLocalAddress()) {
+                            String ip = a.getHostAddress();
+                            base = ip.substring(0, ip.lastIndexOf('.') + 1);
+                        }
+                    }
+                }
+                if (base == null) {
+                    call.reject("Điện thoại chưa kết nối Wi-Fi");
+                    return;
+                }
+                final String prefix = base;
+                final List<String> found = Collections.synchronizedList(new ArrayList<String>());
+                ExecutorService ex = Executors.newFixedThreadPool(64);
+                for (int i = 1; i < 255; i++) {
+                    final String host = prefix + i;
+                    ex.execute(() -> {
+                        try (Socket s = new Socket()) {
+                            s.connect(new InetSocketAddress(host, 9100), 500);
+                            found.add(host);
+                        } catch (Exception ignored) {
+                        }
+                    });
+                }
+                ex.shutdown();
+                ex.awaitTermination(20, TimeUnit.SECONDS);
+                List<String> sorted = new ArrayList<String>(found);
+                Collections.sort(sorted);
+                JSArray arr = new JSArray();
+                for (String h : sorted) arr.put(h);
+                JSObject r = new JSObject();
+                r.put("hosts", arr);
+                call.resolve(r);
+            } catch (Exception e) {
+                call.reject("Không quét được: " + e.getMessage());
             }
         }).start();
     }

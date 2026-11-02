@@ -108,8 +108,8 @@ function tx(g,t,x,y,h,al,sz,w){let p=Math.round(sz);g.font=`bold ${p}px Arial`;w
 
 function diffStr(){const due=$('#due').value?num($('#due').value):null;if(due===null)return'—';const d=total-due;return d===0?'0 (khớp)':(d>0?f(d)+' (thừa)':'-'+f(-d)+' (thiếu)')}
 function draw(wd,im){
- const W=+S.w,s=W/576,rh=Math.round(44*s),hh=Math.round(50*s),h2=Math.round(44*s),T=im?16:Math.round(S.top*8),B=im?16:Math.round(S.bot*8),L=S.bold==='1'?4:2,ft=S.time==='1'?Math.round(38*s):0,dh=wd?h2+rh:0;
- const H=T+hh+10*rh+hh+dh+ft+B,c=$('#cv'),g=c.getContext('2d');
+ const W=+S.w,s=W/576,rh=Math.round(44*s),hh=Math.round(50*s),h2=Math.round(44*s),T=im?16:Math.round(S.top*8),B=im?16:Math.round(S.bot*8),L=S.bold==='1'?4:2,ft=S.time==='1'?Math.round(38*s):0,ex=wd?hh+h2+rh:0;
+ const H=T+hh+10*rh+ex+ft+B,c=$('#cv'),g=c.getContext('2d');
  c.width=W;c.height=H;g.fillStyle='#fff';g.fillRect(0,0,W,H);g.textBaseline='middle';
  const x1=Math.round(W*.28),x2=Math.round(W*.5),fs=26*s,dmy=$('#dt').value.split('-').reverse().join('/');
  const n=new Date(),z=v=>String(v).padStart(2,'0'),now=z(n.getHours())+':'+z(n.getMinutes())+' '+z(n.getDate())+'/'+z(n.getMonth()+1)+'/'+n.getFullYear();
@@ -120,13 +120,14 @@ function draw(wd,im){
  const yr=y;
  tx(g,'TỔNG CỘNG',x2/2,y,rh,'center',fs,x2-10);tx(g,f(total),W-14,y,rh,'right',fs,W-x2-20);y+=rh;g.fillRect(0,y,W,L);
  const yt=y;
- tx(g,`${S.shop} NỘP DT NGÀY ${dmy}`,W/2,y,hh,'center',fs,W-16);y+=hh;g.fillRect(0,y-L,W,L);
- [[0,y],[x1,yr],[x2,yt],[W-L,y]].forEach(([x,e])=>g.fillRect(x,T,L,e-T));
- if(wd){const ys=y;g.fillRect(0,y,W,h2);g.fillStyle='#fff';
-  tx(g,'DOANH THU PHẢI NỘP',x2/2,y,h2,'center',19*s,x2-8);tx(g,'CHÊNH LỆCH',(x2+W)/2,y,h2,'center',19*s,W-x2-8);
-  y+=h2;g.fillStyle='#000';
-  tx(g,$('#due').value?f(num($('#due').value)):'-',x2-14,y,rh,'right',fs,x2-20);tx(g,diffStr(),W-14,y,rh,'right',fs*.9,W-x2-20);
-  y+=rh;g.fillRect(0,y-L,W,L);[0,x2,W-L].forEach(x=>g.fillRect(x,ys,L,y-ys))}
+ if(!wd)[[0,yt+L],[x1,yr],[x2,yt],[W-L,yt+L]].forEach(([x,e])=>g.fillRect(x,T,L,e-T));
+ else{
+  tx(g,`${S.shop} NỘP DT NGÀY ${dmy}`,W/2,y,hh,'center',fs,W-16);y+=hh;g.fillRect(0,y-L,W,L);
+  const yd=y;[[0,yd],[x1,yr],[x2,yt],[W-L,yd]].forEach(([x,e])=>g.fillRect(x,T,L,e-T));
+  g.fillRect(0,y,W,h2);g.fillStyle='#fff';tx(g,'DOANH THU PHẢI NỘP',W/2,y,h2,'center',19*s,W-16);
+  y+=h2;g.fillStyle='#000';tx(g,$('#due').value?f(num($('#due').value)):'-',W/2,y,rh,'center',fs,W-20);
+  y+=rh;g.fillRect(0,y-L,W,L);[0,W-L].forEach(x=>g.fillRect(x,yd,L,y-yd));
+ }
  if(ft)tx(g,'In lúc '+now,W/2,y,ft,'center',21*s,W-16);
 }
 
@@ -159,9 +160,9 @@ const stamp=()=>{const n=new Date(),z=v=>String(v).padStart(2,'0');return $('#dt
 function choose(title,sub,opts){return new Promise(res=>{const d=$('#pick'),b=$('#pb');$('#pt').textContent=title;$('#ps').textContent=sub||'';b.innerHTML='';
  opts.forEach(o=>{const x=document.createElement('button');x.type='button';x.textContent=o.t;x.className=o.c||'';x.disabled=!!o.d;x.onclick=()=>{d.close();res(o.v)};b.appendChild(x)});
  d.oncancel=()=>res(null);d.showModal()})}
-const content=t=>choose(t,'Nội dung nộp tiền gồm Doanh thu phải nộp và Chênh lệch.'+($('#due').value?'':' (Nhập Doanh thu phải nộp để chọn mục thứ hai.)'),[{t:'Chỉ bảng kê',v:0},{t:'Bảng kê và nội dung nộp tiền',v:1,d:!$('#due').value},{t:'Hủy',v:null}]);
-$('#pr').onclick=async()=>{if(!total)return say('Chưa nhập số tờ nào.',false);const m=await content('In bảng kê');if(m===null)return;say('Đang gửi…',true);draw(!!m);await run('send',b64(job()));draw()};
-$('#img').onclick=async()=>{if(!total)return say('Chưa nhập số tờ nào.',false);const m=await content('Xuất ảnh bảng kê');if(m===null)return;
+const content=(t,a,b)=>choose(t,'Bảng kê gồm số tờ, thành tiền và tổng cộng. Nội dung nộp tiền gồm dòng "VH3 NỘP DT NGÀY ..." và Doanh thu phải nộp.'+($('#due').value?'':' (Chưa nhập Doanh thu phải nộp, ô này sẽ in dấu "-".)'),[{t:a,v:0},{t:b,v:1},{t:'Hủy',v:null}]);
+$('#pr').onclick=async()=>{if(!total)return say('Chưa nhập số tờ nào.',false);const m=await content('In bảng kê','Chỉ in bảng kê','In cả nội dung nộp tiền');if(m===null)return;say('Đang gửi…',true);draw(!!m);await run('send',b64(job()));draw()};
+$('#img').onclick=async()=>{if(!total)return say('Chưa nhập số tờ nào.',false);const m=await content('Xuất ảnh bảng kê','Chỉ xuất bảng kê','Xuất cả nội dung nộp tiền');if(m===null)return;
  draw(!!m,true);const u=$('#cv').toDataURL('image/png');draw();
  try{await Capacitor.Plugins.TcpPrinter.saveImage({data:u.split(',')[1],name:'bang-ke-'+stamp()+'.png'});say('Đã lưu ảnh vào thư viện (album BangKeNopTien).',true)}
  catch(e){say((e&&e.message)||'Không lưu được ảnh.',false)}};

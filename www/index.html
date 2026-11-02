@@ -8,12 +8,12 @@
 body{margin:0;font:15px/1.4 "Segoe UI",system-ui,sans-serif;color:var(--ink);background:var(--bg)}
 main{max-width:1000px;margin:0 auto;padding:max(env(safe-area-inset-top,0px),36px) 20px calc(max(env(safe-area-inset-bottom,0px),56px) + 24px);display:grid;grid-template-columns:minmax(0,430px) minmax(0,1fr);gap:28px;align-items:start}
 h1{grid-column:1/-1;margin:0;font-size:22px}
-table{width:100%;border-collapse:collapse;background:#fff;margin-bottom:10px}
-th{background:var(--navy);color:#fff;padding:9px;font-size:13px;font-weight:600}
+table{table-layout:fixed;width:100%;border-collapse:collapse;background:#fff;margin-bottom:10px}
+th{background:var(--navy);color:#fff;padding:8px 4px;font-size:12px;font-weight:600}
 th.y{color:#ffc928}
 td{border:1px solid #000;padding:0}
-td.d{text-align:right;padding:7px 12px;font-variant-numeric:tabular-nums}
-td.n{background:var(--cell);width:46%}
+td.d{text-align:right;padding:7px 8px;font-variant-numeric:tabular-nums}
+td.n{background:var(--cell)}
 td.tot{text-align:center;font-weight:700}
 td.dl{text-align:center;font-weight:700;color:var(--red);padding:8px}
 input,select{font:inherit;color:inherit}
@@ -32,10 +32,11 @@ header{grid-column:1/-1;display:flex;justify-content:space-between;align-items:c
 dialog{border:0;border-radius:10px;padding:18px;width:min(94vw,480px);box-shadow:0 10px 40px #0005}
 dialog::backdrop{background:#0006}
 dialog h2{margin:0 0 4px;font-size:18px}
-.tools{display:flex;gap:8px;margin-bottom:10px}.tools button{flex:1;padding:8px 4px;font-size:14px}
+.tools{display:flex;gap:8px;margin-bottom:10px}.tools button{flex:1;min-width:0;white-space:nowrap;padding:8px 2px;font-size:13px}
+section,aside{min-width:0}#diff{font-size:14px}
 button:disabled{opacity:.4;cursor:default}
-.st{display:flex;align-items:stretch}.st input{width:auto;flex:1;min-width:0;padding:9px 2px}
-.sb{width:36px;border:0;border-radius:0;background:#c3c7cf;font-size:22px;line-height:1;padding:0}
+.st{display:flex;align-items:stretch}.st input{width:auto;flex:1;min-width:0;padding:8px 0;font-size:16px}
+.sb{width:30px;border:0;border-radius:0;background:#c3c7cf;font-size:22px;line-height:1;padding:0}
 .sb:active{background:#aab0ba}
 .prow{display:flex;gap:8px}.prow #pr{flex:1}#img{padding:0 16px;font-weight:700;background:#fff}
 .dng{background:var(--red);color:#fff;border-color:var(--red)}
@@ -53,7 +54,7 @@ summary{cursor:pointer;font-weight:600}
 .g input,.g select{padding:6px;border:1px solid #9aa1ad;border-radius:4px;background:#fff}
 #upd{grid-column:1/-1;background:#fff3b0;border:1px solid #c9a400;border-radius:6px;padding:10px 14px;font-weight:600}
 #upd a{color:#1c2a44}
-@media(max-width:820px){main{grid-template-columns:1fr}}
+@media(max-width:820px){main{grid-template-columns:minmax(0,1fr);padding-left:12px;padding-right:12px}}
 @media print{@page{size:80mm auto;margin:0}body>*{display:none!important}#pbox{display:block!important}#pbox img{width:72mm;display:block;margin:0 auto}}
 </style></head><body>
 <main>
@@ -62,7 +63,7 @@ summary{cursor:pointer;font-weight:600}
 <section>
  <label class="f">Ngày nộp <input type="date" id="dt"></label>
  <div class="tools"><button id="undo" disabled>↶ Hoàn tác</button><button id="redo" disabled>↷ Làm lại</button><button id="clr">Xóa toàn bộ</button></div>
- <table><thead><tr><th>MỆNH GIÁ<th>SỐ TỜ<th>THÀNH TIỀN</thead><tbody id="tb"></tbody>
+ <table><colgroup><col style="width:28%"><col style="width:34%"><col></colgroup><thead><tr><th>MỆNH GIÁ<th>SỐ TỜ<th>THÀNH TIỀN</thead><tbody id="tb"></tbody>
  <tfoot><tr><td colspan="2" class="tot">TỔNG CỘNG<td class="d" id="tot">-
  <tr><td colspan="3" class="dl" id="dl"></tfoot></table>
  <table><tr><th class="y">DOANH THU PHẢI NỘP<th class="y">CHÊNH LỆCH

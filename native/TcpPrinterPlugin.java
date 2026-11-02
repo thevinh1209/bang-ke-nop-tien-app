@@ -1,5 +1,11 @@
 package com.vh3.bangke;
 
+import android.content.ContentResolver;
+import android.content.ContentValues;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.util.Base64;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
@@ -118,5 +124,36 @@ public class TcpPrinterPlugin extends Plugin {
                 call.reject("Không quét được: " + e.getMessage());
             }
         }).start();
+    }
+
+    /** Lưu ảnh PNG vào thư viện ảnh (Pictures/BangKeNopTien), cần Android 10 trở lên. */
+    @PluginMethod
+    public void saveImage(final PluginCall call) {
+        try {
+            if (Build.VERSION.SDK_INT < 29) {
+                call.reject("Cần Android 10 trở lên để lưu ảnh vào thư viện");
+                return;
+            }
+            byte[] data = Base64.decode(call.getString("data", ""), Base64.DEFAULT);
+            String name = call.getString("name", "bang-ke.png");
+            ContentResolver cr = getContext().getContentResolver();
+            ContentValues v = new ContentValues();
+            v.put(MediaStore.Images.Media.DISPLAY_NAME, name);
+            v.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
+            v.put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/BangKeNopTien");
+            v.put(MediaStore.Images.Media.IS_PENDING, 1);
+            Uri uri = cr.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, v);
+            if (uri == null) throw new Exception("không tạo được tệp ảnh");
+            try (OutputStream o = cr.openOutputStream(uri)) {
+                if (o == null) throw new Exception("không mở được tệp ảnh");
+                o.write(data);
+            }
+            v.clear();
+            v.put(MediaStore.Images.Media.IS_PENDING, 0);
+            cr.update(uri, v, null, null);
+            call.resolve();
+        } catch (Exception e) {
+            call.reject("Lưu ảnh không được: " + e.getMessage());
+        }
     }
 }

@@ -38,6 +38,13 @@ button:disabled{opacity:.4;cursor:default}
 .st{display:flex;align-items:stretch}.st input{width:auto;flex:1;min-width:0;padding:8px 0;font-size:16px}
 .sb{width:30px;border:0;border-radius:0;background:#c3c7cf;font-size:22px;line-height:1;padding:0}
 .sb:active{background:#aab0ba}
+.hist{margin-top:14px;background:#fff;border:1px solid #cfd3da;border-radius:6px;position:relative;overflow:hidden}
+.hh{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;font-size:13px;border-bottom:1px solid #e3e5ea}.hh span{color:#667}
+#hl{list-style:none;margin:0;padding:0;max-height:170px;overflow-y:auto}
+#hl li{display:flex;gap:10px;align-items:center;min-height:34px;padding:6px 12px;font-size:14px;border-bottom:1px solid #f0f1f4}
+#hl time{color:#667;font-size:12px;white-space:nowrap;font-variant-numeric:tabular-nums}
+#hl li.cur{background:#fff8c4;font-weight:600}#hl li.off{color:#99a;text-decoration:line-through}#hl li.em{color:#889;justify-content:center}
+#hd{position:absolute;right:10px;bottom:10px;padding:5px 12px;font-size:13px;border-radius:16px;background:#1c2a44;color:#fff;border-color:#1c2a44;box-shadow:0 2px 8px #0004}
 .prow{display:flex;gap:8px}.prow #pr{flex:1}#img{padding:0 16px;font-weight:700;background:#fff}
 .dng{background:var(--red);color:#fff;border-color:var(--red)}
 #ps{margin:4px 0 0;color:#555;font-size:14px}#pb{display:flex;flex-direction:column;gap:8px;margin-top:14px}#pb button{padding:12px}
@@ -70,6 +77,7 @@ summary{cursor:pointer;font-weight:600}
  <tr><td><input id="due" inputmode="numeric" placeholder="Nhập số tiền"><td class="d" id="diff">—</table>
  <div class="prow"><button id="pr">In bảng kê</button><button id="img">Xuất ảnh</button></div>
  <p id="msg" class="m"></p>
+ <div class="hist"><div class="hh"><b>Lịch sử thao tác</b><span id="hc"></span></div><ol id="hl"></ol><button id="hd" type="button" hidden>↓ Cuộn xuống</button></div>
 </section>
 <aside>
  <div class="paper"><canvas id="cv"></canvas></div>
@@ -166,13 +174,27 @@ $('#img').onclick=async()=>{if(!total)return say('Chưa nhập số tờ nào.',
  draw(!!m,true);const u=$('#cv').toDataURL('image/png');draw();
  try{await Capacitor.Plugins.TcpPrinter.saveImage({data:u.split(',')[1],name:'bang-ke-'+stamp()+'.png'});say('Đã lưu ảnh vào thư viện (album BangKeNopTien).',true)}
  catch(e){say((e&&e.message)||'Không lưu được ảnh.',false)}};
-let H=[],hi=-1,rs=false;
-const snap=()=>JSON.stringify({c:D.map((v,i)=>$('#r'+i).value),d:$('#due').value}),ub=()=>{$('#undo').disabled=hi<=0;$('#redo').disabled=hi>=H.length-1};
+let H=[],HL=[null],hi=-1,rs=false;
+const hms=()=>{const n=new Date(),z=v=>String(v).padStart(2,'0');return z(n.getHours())+':'+z(n.getMinutes())+':'+z(n.getSeconds())};
+function describe(a,b){const A=JSON.parse(a),B=JSON.parse(b),o=[];
+ B.c.forEach((v,i)=>{if(v!==A.c[i])o.push(f(D[i])+': '+num(A.c[i])+' → '+num(v)+' tờ')});
+ if(A.d!==B.d)o.push('Doanh thu phải nộp: '+(A.d||'trống')+' → '+(B.d||'trống'));
+ return o.join('; ')||'Thay đổi'}
+function hdUpd(){const l=$('#hl');$('#hd').hidden=!(l.scrollHeight>l.clientHeight+4&&l.scrollTop+l.clientHeight<l.scrollHeight-4)}
+function logUI(){const l=$('#hl');if(!l)return;
+ l.innerHTML=H.length<2?'<li class="em">Chưa có thay đổi nào.</li>':H.map((_,i)=>i?'<li class="'+(i===hi?'cur':i>hi?'off':'')+'"><time>'+HL[i].t+'</time><span>'+HL[i].m+'</span></li>':'').join('');
+ $('#hc').textContent=Math.max(H.length-1,0)+'/20';
+ const c=l.querySelector('.cur');
+ if(c){const t=c.offsetTop-l.offsetTop;if(t<l.scrollTop)l.scrollTop=t;else if(t+c.offsetHeight>l.scrollTop+l.clientHeight)l.scrollTop=t+c.offsetHeight-l.clientHeight}else l.scrollTop=0;
+ hdUpd()}
+$('#hl').addEventListener('scroll',hdUpd);
+$('#hd').onclick=()=>$('#hl').scrollTo({top:$('#hl').scrollHeight,behavior:'smooth'});
+const snap=()=>JSON.stringify({c:D.map((v,i)=>$('#r'+i).value),d:$('#due').value}),ub=()=>{$('#undo').disabled=hi<=0;$('#redo').disabled=hi>=H.length-1;logUI()};
 function load(sn){const o=JSON.parse(sn);rs=true;o.c.forEach((v,i)=>$('#r'+i).value=v);$('#due').value=o.d;calc();rs=false}
-function rec(){if(rs)return;const sn=snap();if(H[hi]===sn)return;H=H.slice(0,hi+1);H.push(sn);if(H.length>21)H.shift();hi=H.length-1;ub()}
+function rec(label){if(rs)return;const sn=snap();if(H[hi]===sn)return;const m=typeof label==='string'?label:describe(H[hi],sn);H=H.slice(0,hi+1);HL=HL.slice(0,hi+1);H.push(sn);HL.push({t:hms(),m});if(H.length>21){H.shift();HL.shift()}hi=H.length-1;ub()}
 $('#undo').onclick=()=>{if(hi>0){hi--;load(H[hi]);ub()}};
 $('#redo').onclick=()=>{if(hi<H.length-1){hi++;load(H[hi]);ub()}};
-$('#clr').onclick=async()=>{const v=await choose('Xóa toàn bộ?','Tất cả số tờ và doanh thu phải nộp đã nhập sẽ bị xóa. Bạn có thể bấm Hoàn tác để lấy lại.',[{t:'Xóa toàn bộ',v:1,c:'dng'},{t:'Hủy',v:null}]);if(!v)return;D.forEach((_,i)=>$('#r'+i).value='');$('#due').value='';calc();rec()};
+$('#clr').onclick=async()=>{const v=await choose('Xóa toàn bộ?','Tất cả số tờ và doanh thu phải nộp đã nhập sẽ bị xóa. Bạn có thể bấm Hoàn tác để lấy lại.',[{t:'Xóa toàn bộ',v:1,c:'dng'},{t:'Hủy',v:null}]);if(!v)return;D.forEach((_,i)=>$('#r'+i).value='');$('#due').value='';calc();rec('Xóa toàn bộ')};
 $('#tb').onclick=e=>{const b=e.target.closest('.sb');if(!b)return;const i=+b.dataset.i,d=+b.dataset.d,x=$('#r'+i),v=num(x.value);if(d<0&&(x.value.trim()===''||v===0))return;x.value=String(Math.max(0,v+d));calc();rec()};
 $('#chk').onclick=()=>run('check','');
 $('#scan').onclick=async()=>{const L=$('#found');L.textContent='Đang tìm, khoảng vài giây…';
